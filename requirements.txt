@@ -1,4 +1,4 @@
-cython==0.29.35
+cython==0.29.22
 pytest
 pytest-asyncio
 kafka-python
