@@ -223,8 +223,7 @@ cdef class Consumer:
                     else:
                         if debug: logger.debug("Poll timeout without messages")
                         await asyncio.sleep(
-                            CONSUMER_RD_KAFKA_POLL_PERIOD_SECONDS,
-                            loop=self.loop
+                            CONSUMER_RD_KAFKA_POLL_PERIOD_SECONDS
                         )
         except asyncio.CancelledError:
             logger.info("Poll consumer thread task canceled")
