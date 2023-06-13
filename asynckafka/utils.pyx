@@ -65,5 +65,5 @@ async def periodic_rd_kafka_poll(
         long rk_addr, loop: asyncio.AbstractEventLoop):
     rk_ptr = <crdk.rd_kafka_t*> rk_addr
     while True:
-        await asyncio.sleep(1, loop=loop)
+        await asyncio.sleep(1)
         crdk.rd_kafka_poll(rk_ptr, 0)

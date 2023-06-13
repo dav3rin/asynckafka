@@ -78,8 +78,7 @@ cdef class Producer:
                         "waiting 0.1 seconds to retry"
                     )
                     await asyncio.sleep(
-                        PRODUCER_RD_KAFKA_POLL_PERIOD_SECONDS,
-                        loop=self.loop
+                        PRODUCER_RD_KAFKA_POLL_PERIOD_SECONDS
                     )
                 else:
                     # TODO read ERROR !!
