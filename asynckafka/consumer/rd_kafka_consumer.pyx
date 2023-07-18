@@ -13,7 +13,7 @@ logger = logging.getLogger('asynckafka')
 cdef class RdKafkaConsumer:
 
     def __init__(self, brokers: str, consumer_config: dict,
-                 topic_config: dict, group_id=None):
+                 topic_config: dict=None, group_id=None):
         self.topics = []
         self.brokers = brokers.encode() if brokers else b"127.0.0.1:9092"
 
