@@ -20,7 +20,7 @@ cdef void cb_logger(const crdk.rd_kafka_t *rk, int level, const char *fac,
     if level in {1, 2}:
         logger.critical(f"{fac_str}:{buf_str}")
     elif level == 3:
-        logger.error(f"{fac_str}:{buf_str)}")
+        logger.error(f"{fac_str}:{buf_str}")
     elif level in {4, 5}:
         logger.info(f"{fac_str}:{buf_str}")
     elif level in {6, 7}:

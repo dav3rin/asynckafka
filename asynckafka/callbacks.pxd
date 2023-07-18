@@ -6,7 +6,7 @@ cdef void cb_logger(
         int level,
         const char *fac,
         const char *buf
-)
+) noexcept
 
 
 cdef void cb_error(
@@ -14,7 +14,7 @@ cdef void cb_error(
         int err,
         const char *reason,
         void *opaque
-)
+) noexcept
 
 
 cdef void cb_rebalance(
@@ -22,4 +22,4 @@ cdef void cb_rebalance(
         crdk.rd_kafka_resp_err_t err,
         crdk.rd_kafka_topic_partition_list_t *partitions,
         void *opaque
-)
+) noexcept
