@@ -14,7 +14,7 @@ _name_to_callback_error = {}
 
 
 cdef void cb_logger(const crdk.rd_kafka_t *rk, int level, const char *fac,
-                    const char *buf):
+                    const char *buf) noexcept:
     fac_str = bytes(fac).decode()
     buf_str = bytes(buf).decode()
     if level in {1, 2}:
@@ -28,7 +28,7 @@ cdef void cb_logger(const crdk.rd_kafka_t *rk, int level, const char *fac,
 
 
 cdef void cb_error(crdk.rd_kafka_t *rk, int err, const char *reason,
-                   void *opaque):
+                   void *opaque) noexcept:
     err_enum = <crdk.rd_kafka_resp_err_t> err
     rd_name_str = bytes(crdk.rd_kafka_name(rk)).decode()
     error_str = bytes(crdk.rd_kafka_err2str(err_enum)).decode()
@@ -89,7 +89,7 @@ cdef inline log_partition_list(
 
 
 cdef void cb_rebalance(crdk.rd_kafka_t *rk, crdk.rd_kafka_resp_err_t err,
-        crdk.rd_kafka_topic_partition_list_t *partitions, void *opaque):
+        crdk.rd_kafka_topic_partition_list_t *partitions, void *opaque) noexcept:
     logger.debug("Consumer group rebalance")
     if err == crdk.RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
         logger.debug("New partitions assigned")
