@@ -6,6 +6,7 @@ cdef extern from "librdkafka/rdkafka.h":
     ctypedef struct rd_kafka_conf_t
     ctypedef struct rd_kafka_topic_conf_t
     ctypedef struct rd_kafka_queue_t
+    ctypedef struct rd_kafka_error_t
 
     ctypedef enum rd_kafka_type_t:
         RD_KAFKA_PRODUCER
@@ -159,7 +160,7 @@ cdef extern from "librdkafka/rdkafka.h":
         RD_KAFKA_RESP_ERR_TRANSACTIONAL_ID_AUTHORIZATION_FAILED = 53
         RD_KAFKA_RESP_ERR_SECURITY_DISABLED = 54
         RD_KAFKA_RESP_ERR_OPERATION_NOT_ATTEMPTED = 55
-
+    
     ctypedef struct rd_kafka_message_t:
         rd_kafka_resp_err_t err
         rd_kafka_topic_t *rkt
@@ -206,6 +207,16 @@ cdef extern from "librdkafka/rdkafka.h":
             const rd_kafka_topic_partition_list_t *partitions
     )
 
+    rd_kafka_error_t rd_kafka_incremental_assign(
+            rd_kafka_t *rk,
+            const rd_kafka_topic_partition_list_t *partitions
+    )
+
+    rd_kafka_error_t rd_kafka_incremental_unassign(
+            rd_kafka_t *rk,
+            const rd_kafka_topic_partition_list_t *partitions
+    )
+
     ctypedef struct rd_kafka_topic_partition_list_t:
         int cnt
         int size
@@ -222,6 +233,8 @@ cdef extern from "librdkafka/rdkafka.h":
         void       *_private
 
     const char *rd_kafka_err2str(rd_kafka_resp_err_t err)
+
+    const char *rd_kafka_rebalance_protocol(rd_kafka_t *rk)
 
     const char *rd_kafka_message_errstr(const rd_kafka_message_t *rkmessage)
 

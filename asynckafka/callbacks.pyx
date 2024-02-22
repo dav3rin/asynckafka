@@ -94,11 +94,30 @@ cdef void cb_rebalance(crdk.rd_kafka_t *rk, crdk.rd_kafka_resp_err_t err,
     if err == crdk.RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
         logger.debug("New partitions assigned")
         log_partition_list(partitions)
-        crdk.rd_kafka_assign(rk, partitions)
+
+        rebalance_protocol = str(crdk.rd_kafka_rebalance_protocol(rk))
+        logger.debug(f"rebalance_protocol={rebalance_protocol}")
+
+        if rebalance_protocol == "COOPERATIVE":
+            logger.debug("Using COOPERATIVE protocol")
+            crdk.rd_kafka_incremental_assign(rk, partitions)
+        else:
+            logger.debug("Using EAGER protocol")
+            crdk.rd_kafka_assign(rk, partitions)
+
     elif err == crdk.RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
         logger.debug("Revoked Partitions")
         log_partition_list(partitions)
-        crdk.rd_kafka_assign(rk, NULL)
+
+        rebalance_protocol = str(crdk.rd_kafka_rebalance_protocol(rk))
+        logger.debug(f"rebalance_protocol={rebalance_protocol}")
+
+        if rebalance_protocol == "COOPERATIVE":
+            logger.debug("Using COOPERATIVE protocol")
+            crdk.rd_kafka_incremental_unassign(rk, partitions)
+        else:
+            logger.debug("Using EAGER protocol")
+            crdk.rd_kafka_assign(rk, NULL)
     else:
         err_str = crdk.rd_kafka_err2str(err)
         logger.error(
