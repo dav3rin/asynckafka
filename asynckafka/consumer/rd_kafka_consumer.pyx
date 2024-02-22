@@ -133,13 +133,13 @@ cdef class RdKafkaConsumer:
       crdk.rd_kafka_topic_partition_list_add(partitions, topic.encode(), partition).offset = offset
       
       rebalance_protocol = bytes(crdk.rd_kafka_rebalance_protocol(self.consumer)).decode()
-      logger.info(f"rebalance_protocol={rebalance_protocol}")
+      logger.debug(f"rebalance_protocol={rebalance_protocol}")
 
       if rebalance_protocol == "COOPERATIVE":
-          logger.info("Using COOPERATIVE protocol")
+          logger.debug("Using COOPERATIVE protocol")
           crdk.rd_kafka_incremental_unassign(self.consumer, partitions)
       else:
-          logger.info("Using EAGER protocol")
+          logger.debug("Using EAGER protocol")
           crdk.rd_kafka_assign(self.consumer, partitions)
           
       crdk.rd_kafka_topic_partition_list_destroy(partitions)
