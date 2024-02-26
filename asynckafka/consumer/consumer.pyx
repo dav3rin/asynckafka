@@ -224,7 +224,7 @@ cdef class Consumer:
                         crdk.rd_kafka_commit_message(
                             self.rdk_consumer.consumer, rk_message, 0
                         )
-                        message_destroy(rk_message)
+                        crdk.message_destroy(rk_message)
                     else:
                         if debug: logger.debug("Poll timeout without messages")
                         await asyncio.sleep(
