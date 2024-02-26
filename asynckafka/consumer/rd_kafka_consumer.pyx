@@ -24,8 +24,6 @@ cdef class RdKafkaConsumer:
             consumer_config)
 
         topic_config = topic_config if topic_config else {}
-        if 'group.id' in consumer_config:
-            topic_config["offset.store.method"] = "broker"
         self.topic_config = utils.parse_and_encode_settings(topic_config)
 
         self.status = consumer_states.NOT_STARTED

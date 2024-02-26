@@ -33,10 +33,6 @@ class TestsUnitRdKafkaConsumer(unittest.TestCase):
             rd_kafka_consumer.consumer_config,
             {b'group.id': b'my_test_group_id'},
         )
-        self.assertDictEqual(
-            rd_kafka_consumer.topic_config,
-            {b'offset.store.method': b'broker'}
-        )
 
     def test_init_no_add_group_to_settings(self):
         rd_kafka_consumer = RdKafkaConsumer(
@@ -49,10 +45,7 @@ class TestsUnitRdKafkaConsumer(unittest.TestCase):
             rd_kafka_consumer.consumer_config,
             {b'group.id': b'default_consumer_group'}
         )
-        self.assertDictEqual(
-            rd_kafka_consumer.topic_config,
-            {b'offset.store.method': b'broker'}
-        )
+
 
     def test_init_rd_kafka_configs(self):
         rd_kafka_consumer = consumer_factory()
