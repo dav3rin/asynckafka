@@ -24,9 +24,9 @@ cdef inline Message message_factory_no_destroy(crdk.rd_kafka_message_t *rk_messa
         _copy_data_to_message(message, rk_message)
     return message
 
-cdef inline bool message_destroy(crdk.rd_kafka_message_t *rk_message):
+cdef inline Message message_destroy(crdk.rd_kafka_message_t *rk_message):
     crdk.rd_kafka_message_destroy(rk_message)
-    return True
+    return Message()
 
 cdef inline Message _copy_data_to_message(
         Message message, crdk.rd_kafka_message_t *rk_message):
