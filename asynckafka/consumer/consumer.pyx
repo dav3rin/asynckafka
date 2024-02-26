@@ -6,6 +6,8 @@ from asynckafka.callbacks import register_error_callback, \
     unregister_error_callback
 from asynckafka.settings import CONSUMER_RD_KAFKA_POLL_PERIOD_SECONDS
 from asynckafka.consumer.message cimport message_factory
+from asynckafka.consumer.message cimport message_factory_no_destroy
+from asynckafka.consumer.message cimport message_destroy
 from asynckafka.consumer.rd_kafka_consumer cimport RdKafkaConsumer
 from asynckafka.includes cimport c_rd_kafka as crdk
 from asynckafka.settings cimport debug
