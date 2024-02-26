@@ -85,7 +85,7 @@ cdef inline log_partition_list(
         string += f" [Topic: {str(topic)}, " \
                   f"Partition: {str(partition)}, " \
                   f"Offset: {str(offset)}]"
-    logger.debug(string)
+    logger.info(string)
 
 
 cdef void cb_rebalance(crdk.rd_kafka_t *rk, crdk.rd_kafka_resp_err_t err,
