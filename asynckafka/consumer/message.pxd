@@ -3,6 +3,8 @@ from libc.stdint cimport int32_t
 
 
 cdef Message message_factory(crdk.rd_kafka_message_t *rk_message)
+cdef Message message_factory_no_destroy(crdk.rd_kafka_message_t *rk_message)
+cdef bool message_destroy(crdk.rd_kafka_message_t *rk_message)
 
 
 cdef class Message:

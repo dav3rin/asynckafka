@@ -204,6 +204,43 @@ cdef class Consumer:
         else:
             raise exceptions.ConsumerError("Consumer isn't consuming")
 
+    async def next_commited(self):
+        """
+        Polls rdkafka consumer and build the message object.
+
+        Returns:
+            asynckafka.consumer.message.Message: Message consumed.
+        """
+        cdef crdk.rd_kafka_message_t *rk_message
+        try:
+            while self.consumer_state == consumer_states.CONSUMING:
+                    rk_message = crdk.rd_kafka_consumer_poll(
+                        self.rdk_consumer.consumer, 0)
+                    if rk_message:
+                        message = message_factory_no_destroy(rk_message)
+                        if not message.error:
+                            yield message
+                        
+                        crdk.rd_kafka_commit_message(
+                            self.rdk_consumer.consumer, rk_message, 0
+                        )
+                        message_destroy(rk_message)
+                    else:
+                        if debug: logger.debug("Poll timeout without messages")
+                        await asyncio.sleep(
+                            CONSUMER_RD_KAFKA_POLL_PERIOD_SECONDS
+                        )
+        except asyncio.CancelledError:
+            logger.info("Poll consumer thread task canceled")
+            raise
+        except Exception:
+            logger.error(
+                "Unexpected exception consuming messages from thread",
+                exc_info=True
+            )
+        raise StopAsyncIteration
+
+
     async def __anext__(self):
         """
         Polls rdkafka consumer and build the message object.
