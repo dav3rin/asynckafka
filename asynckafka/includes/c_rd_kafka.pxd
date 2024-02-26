@@ -344,7 +344,7 @@ cdef extern from "librdkafka/rdkafka.h":
             int async
     )
 
-    rd_kafka_commit_message(rd_kafka_t *rk,
+    rd_kafka_resp_err_t rd_kafka_commit_message(rd_kafka_t *rk,
                         const rd_kafka_message_t *rkmessage,
                         int async);
 
