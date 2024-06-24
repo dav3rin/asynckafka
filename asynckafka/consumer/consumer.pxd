@@ -15,3 +15,4 @@ cdef class Consumer:
         public object loop
         list topics
         public object error_callback
+        float poll_interval
