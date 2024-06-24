@@ -4,7 +4,6 @@ import logging
 from asynckafka import exceptions, utils
 from asynckafka.callbacks import register_error_callback, \
     unregister_error_callback
-from asynckafka.settings import CONSUMER_RD_KAFKA_POLL_PERIOD_SECONDS
 from asynckafka.consumer.message cimport message_factory
 from asynckafka.consumer.message cimport message_factory_no_destroy
 from asynckafka.consumer.message cimport message_destroy
@@ -43,7 +42,7 @@ cdef class Consumer:
     """
     def __init__(self, topics, brokers=None, group_id=None,
                  rdk_consumer_config=None, rdk_topic_config=None,
-                 error_callback=None, loop=None):
+                 error_callback=None, loop=None, poll_s = 0.1):
         # TODO add auto_partition_assigment as parameter
         self.rdk_consumer = RdKafkaConsumer(
             brokers=brokers, group_id=group_id, topic_config=rdk_topic_config,
@@ -57,6 +56,7 @@ cdef class Consumer:
         self.consumer_state = consumer_states.NOT_CONSUMING
         self.poll_rd_kafka_task = None
         self.error_callback = error_callback
+        self.poll_s = poll_s
 
 
     def seek(self, topic_partition, timeout=500):
@@ -230,7 +230,7 @@ cdef class Consumer:
                     else:
                         if debug: logger.debug("Poll timeout without messages")
                         await asyncio.sleep(
-                            CONSUMER_RD_KAFKA_POLL_PERIOD_SECONDS
+                            self.poll_s
                         )
         except asyncio.CancelledError:
             logger.info("Poll consumer thread task canceled")
@@ -262,7 +262,7 @@ cdef class Consumer:
                     else:
                         if debug: logger.debug("Poll timeout without messages")
                         await asyncio.sleep(
-                            CONSUMER_RD_KAFKA_POLL_PERIOD_SECONDS
+                            self.poll_s
                         )
         except asyncio.CancelledError:
             logger.info("Poll consumer thread task canceled")
