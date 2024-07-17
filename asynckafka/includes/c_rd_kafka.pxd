@@ -170,6 +170,7 @@ cdef extern from "librdkafka/rdkafka.h":
         void   *key
         size_t  key_len
         int64_t offset
+        int32_t partition
         void  *_private
 
     rd_kafka_t *rd_kafka_new(
