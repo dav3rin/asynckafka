@@ -15,4 +15,5 @@ cdef class Message:
 
     cdef public str topic
     cdef public int32_t offset
+    cdef public int32_t partition
 

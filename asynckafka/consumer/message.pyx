@@ -41,6 +41,8 @@ cdef inline Message _copy_data_to_message(
     message.topic = bytes(crdk.rd_kafka_topic_name(rk_message.rkt)).decode()
     if rk_message.offset:
         message.offset = rk_message.offset
+    
+    message.partition = rk_message.partition
 
     return message
 

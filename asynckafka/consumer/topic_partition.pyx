@@ -36,5 +36,5 @@ cdef crdk.rd_kafka_topic_partition_list_t* new_partition():
 cdef class TopicPartition:
 
     def __repr__(self):
-        return f"topic: {self.topic.decode()}, partition: {self.partition}, " \
-               f"offset: {self.offset}, metadata: {self.metadata}"
+        return f"topic={self.topic.decode()}, partition={self.partition}, " \
+               f"offset={self.offset}, metadata={self.metadata}"
