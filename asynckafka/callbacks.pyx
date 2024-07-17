@@ -82,9 +82,9 @@ cdef inline log_partition_list(
         topic = partitions.elems[i].topic
         partition = partitions.elems[i].partition
         offset = partitions.elems[i].offset
-        string += f"[topic={str(topic)}, " \
+        string += f"partitions=(topic={str(topic)}, " \
                   f"partition={str(partition)}, " \
-                  f"offset={str(offset)}]"
+                  f"offset={str(offset)})"
     logger.info(string)
 
 
@@ -92,10 +92,7 @@ cdef void cb_rebalance(crdk.rd_kafka_t *rk, crdk.rd_kafka_resp_err_t err,
         crdk.rd_kafka_topic_partition_list_t *partitions, void *opaque) noexcept:
     logger.info("consumer group rebalance")
     if err == crdk.RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
-        logger.info("new partitions assigned:")
-        logger.info("------------------------")
         log_partition_list(partitions)
-        logger.info("------------------------")
 
         rebalance_protocol = bytes(crdk.rd_kafka_rebalance_protocol(rk)).decode()
 
@@ -109,10 +106,8 @@ cdef void cb_rebalance(crdk.rd_kafka_t *rk, crdk.rd_kafka_resp_err_t err,
             crdk.rd_kafka_assign(rk, partitions)
 
     elif err == crdk.RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
-        logger.info("revoked partitions:")
-        logger.info("------------------------")
+        logger.info("partitions revoked")
         log_partition_list(partitions)
-        logger.info("------------------------")
 
         rebalance_protocol = str(crdk.rd_kafka_rebalance_protocol(rk))
         logger.debug(f"rebalance_protocol={rebalance_protocol}")
