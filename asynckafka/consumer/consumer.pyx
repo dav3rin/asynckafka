@@ -222,6 +222,8 @@ cdef class Consumer:
                         message = message_factory_no_destroy(rk_message)
                         if not message.error:
                             yield message
+                        else:
+                            raise exceptions.ConsumerError("Message error")
                         
                         crdk.rd_kafka_commit_message(
                             self.rdk_consumer.consumer, rk_message, 0
@@ -259,6 +261,8 @@ cdef class Consumer:
                         message = message_factory(rk_message)
                         if not message.error:
                             return message
+                        else:
+                            raise exceptions.ConsumerError("Message error")
                     else:
                         if debug: logger.debug("Poll timeout without messages")
                         await asyncio.sleep(
