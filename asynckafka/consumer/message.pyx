@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from asynckafka.includes cimport c_rd_kafka as crdk
 from asynckafka.settings cimport debug
@@ -83,4 +84,15 @@ cdef inline char _is_error(crdk.rd_kafka_message_t *rk_message):
 
 
 cdef class Message:
+    """
+    Represents a message consumed from Kafka.
+    
+    Attributes:
+        error (int): Error code, 0 if no error occurred
+        payload (bytes): Message content as bytes
+        key (bytes): Message key as bytes
+        topic (str): Topic name the message was consumed from
+        offset (int): Message offset in the partition
+        partition (int): Partition number the message was consumed from
+    """
     pass

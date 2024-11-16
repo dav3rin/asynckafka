@@ -11,6 +11,7 @@ logger = logging.getLogger('asynckafka')
 
 _error_callback = None
 _name_to_callback_error = {}
+_name_to_callback_rebalance = {}
 
 
 cdef void cb_logger(const crdk.rd_kafka_t *rk, int level, const char *fac,
@@ -75,6 +76,27 @@ def unregister_error_callback(name):
     del _name_to_callback_error[name]
 
 
+def register_rebalance_callback(consumer, name):
+    """
+    Internal method used by the consumer to register rebalance callbacks.
+    Args:
+        consumer (asynckafka.Consumer): Consumer instance
+        name (str): Consumer name
+    """
+    logger.info(f"Registering rebalance callback of {name}")
+    _name_to_callback_rebalance[name] = consumer
+
+
+def unregister_rebalance_callback(name):
+    """
+    Internal method used by the consumer to unregister rebalance callbacks.
+    Args:
+        name (str): Consumer name
+    """
+    logger.info(f"Unregistering rebalance callback of {name}")
+    del _name_to_callback_rebalance[name]
+
+
 cdef inline log_partition_list(
         crdk.rd_kafka_topic_partition_list_t *partitions):
     string = ""
@@ -91,11 +113,23 @@ cdef inline log_partition_list(
 cdef void cb_rebalance(crdk.rd_kafka_t *rk, crdk.rd_kafka_resp_err_t err,
         crdk.rd_kafka_topic_partition_list_t *partitions, void *opaque) noexcept:
     logger.info("consumer group rebalance")
+    rd_name_str = bytes(crdk.rd_kafka_name(rk)).decode()
+    
+    # Get partition info for callback
+    partition_info = []
+    for i in range(partitions.cnt):
+        topic = bytes(partitions.elems[i].topic).decode()
+        partition = partitions.elems[i].partition
+        offset = partitions.elems[i].offset
+        partition_info.append({
+            'topic': topic,
+            'partition': partition,
+            'offset': offset
+        })
+    
     if err == crdk.RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
         log_partition_list(partitions)
-
         rebalance_protocol = bytes(crdk.rd_kafka_rebalance_protocol(rk)).decode()
-
         logger.debug(f"rebalance_protocol={rebalance_protocol}")
 
         if rebalance_protocol == "COOPERATIVE":
@@ -105,12 +139,36 @@ cdef void cb_rebalance(crdk.rd_kafka_t *rk, crdk.rd_kafka_resp_err_t err,
             logger.debug("Using EAGER protocol")
             crdk.rd_kafka_assign(rk, partitions)
 
+        # Notify callback of partition assignment
+        try:
+            consumer = _name_to_callback_rebalance[rd_name_str]
+            asyncio.run_coroutine_threadsafe(
+                consumer.rebalance_callback('assign', partition_info),
+                loop=consumer.loop
+            )
+        except KeyError:
+            logger.error("Rebalance callback of not registered consumer")
+        except Exception:
+            logger.exception("Unexpected exception in rebalance callback")
+
     elif err == crdk.RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
         logger.info("partitions revoked")
         log_partition_list(partitions)
 
         rebalance_protocol = str(crdk.rd_kafka_rebalance_protocol(rk))
         logger.debug(f"rebalance_protocol={rebalance_protocol}")
+
+        # Notify callback of partition revocation before actually revoking
+        try:
+            consumer = _name_to_callback_rebalance[rd_name_str]
+            asyncio.run_coroutine_threadsafe(
+                consumer.rebalance_callback('revoke', partition_info),
+                loop=consumer.loop
+            )
+        except KeyError:
+            logger.error("Rebalance callback of not registered consumer")
+        except Exception:
+            logger.exception("Unexpected exception in rebalance callback")
 
         if rebalance_protocol == "COOPERATIVE":
             logger.debug("Using COOPERATIVE protocol")

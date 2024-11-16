@@ -1,15 +1,17 @@
 import asyncio
 import logging
+from typing import List, Optional, Callable, Coroutine, Any, Dict
 
 from asynckafka import exceptions, utils
 from asynckafka.callbacks import register_error_callback, \
-    unregister_error_callback
+    unregister_error_callback, register_rebalance_callback, unregister_rebalance_callback
 from asynckafka.consumer.message cimport message_factory
 from asynckafka.consumer.message cimport message_factory_no_destroy
 from asynckafka.consumer.message cimport message_destroy
 from asynckafka.consumer.rd_kafka_consumer cimport RdKafkaConsumer
 from asynckafka.includes cimport c_rd_kafka as crdk
 from asynckafka.settings cimport debug
+from asynckafka.exceptions import KafkaError
 
 
 logger = logging.getLogger('asynckafka')
@@ -17,32 +19,44 @@ logger = logging.getLogger('asynckafka')
 
 cdef class Consumer:
     """
-    TODO DOC
-
+    An async Kafka consumer that can be used as an async iterator.
+    
     Example:
-        Consumer works as a async iterator::
+        Consumer works as an async iterator::
 
-            consumer = Consumer(['my_topic'])
+            consumer = Consumer(['my_topic'], brokers='localhost:9092')
             consumer.start()
 
             async for message in consumer:
                 print(message.payload)
+                
+            # When done
+            consumer.stop()
 
     Args:
-        brokers (str): Brokers separated with ",", example:
-            "192.168.1.1:9092,192.168.1.2:9092".
-        topics (list): Topics to consume.
-        group_id (str): Consumer group identifier.
-        rdk_consumer_config (dict): Rdkafka consumer settings.
-        rdk_topic_config (dict): Rdkafka topic settings.
-        error_callback (Coroutine[asyncio.exceptions.KafkaError]): Coroutine
-            with one argument (KafkaError). It is scheduled in the loop when
-            there is an error, for example, if the broker is down.
-        loop (asyncio.AbstractEventLoop): Asyncio event loop.
+        topics (List[str]): List of topics to consume from
+        brokers (Optional[str]): Comma-separated list of brokers, e.g. "host1:9092,host2:9092"
+        group_id (Optional[str]): Consumer group identifier
+        rdk_consumer_config (Optional[dict]): Additional rdkafka consumer configuration
+        rdk_topic_config (Optional[dict]): Additional rdkafka topic configuration  
+        error_callback (Optional[Callable[[KafkaError], Coroutine[Any, Any, None]]]): 
+            Async callback for error handling. Receives a KafkaError object.
+        rebalance_callback (Optional[Callable[[str, List[dict]], Coroutine[Any, Any, None]]]): 
+            Async callback for rebalance events. Receives event_type ('assign' or 'revoke') and 
+            list of partition info dicts with keys: topic (str), partition (int), offset (int)
+        loop (Optional[asyncio.AbstractEventLoop]): Event loop to use
+        poll_interval (float): Sleep interval between polls when no messages (default: 0.025)
+
+    Raises:
+        exceptions.ConsumerError: On consumer initialization errors
+        exceptions.InvalidSetting: On invalid configuration
+        exceptions.UnknownSetting: On unknown configuration options
     """
-    def __init__(self, topics, brokers=None, group_id=None,
-                 rdk_consumer_config=None, rdk_topic_config=None,
-                 error_callback=None, loop=None, poll_interval = 0.025):
+    def __init__(self, topics: List[str], brokers: Optional[str] = None, group_id: Optional[str] = None,
+                 rdk_consumer_config: Optional[dict] = None, rdk_topic_config: Optional[dict] = None,
+                 error_callback: Optional[Callable[[KafkaError], Coroutine[Any, Any, None]]] = None,
+                 rebalance_callback: Optional[Callable[[str, List[dict]], Coroutine[Any, Any, None]]] = None,
+                 loop: Optional[asyncio.AbstractEventLoop] = None, poll_interval: float = 0.025):
         # TODO add auto_partition_assigment as parameter
         self.rdk_consumer = RdKafkaConsumer(
             brokers=brokers, group_id=group_id, topic_config=rdk_topic_config,
@@ -56,21 +70,22 @@ cdef class Consumer:
         self.consumer_state = consumer_states.NOT_CONSUMING
         self.poll_rd_kafka_task = None
         self.error_callback = error_callback
+        self.rebalance_callback = rebalance_callback
         self.poll_interval = poll_interval
 
 
-    def seek(self, topic_partition, timeout=500):
-      """
-      Seek the topic_partition to specified offset.
+    def seek(self, topic_partition, timeout: int = 500) -> None:
+        """
+        Seek consumer to a specific offset for a topic partition.
 
-      Example:
-        topic_partition.offset = seek_offset
-        consumer.seek(topic_partition)
+        Args:
+            topic_partition (TopicPartition): Topic partition to seek
+            timeout (int): Operation timeout in milliseconds
 
-      Raises:
-          asynckafka.exceptions.ConsumerError: Request timeout.
-      """
-      self.rdk_consumer.seek(topic_partition, timeout)
+        Raises:
+            exceptions.ConsumerError: If seek operation times out
+        """
+        self.rdk_consumer.seek(topic_partition, timeout)
 
     def is_consuming(self):
         """
@@ -121,14 +136,22 @@ cdef class Consumer:
             if self.error_callback:
                 register_error_callback(
                     self, self.rdk_consumer.get_name())
+            if self.rebalance_callback:
+                register_rebalance_callback(
+                    self, self.rdk_consumer.get_name())
             self.consumer_state = consumer_states.CONSUMING
             logger.info('Consumer started')
 
-    def assign_topic_offset(self, topic, partition, offset):
-      """
-      Assign topic/partition with specified offset.
-      """
-      self.rdk_consumer.assign_topic_offset(topic, partition, offset)
+    def assign_topic_offset(self, topic: str, partition: int, offset: int) -> None:
+        """
+        Manually assign consumer to specific topic partition and offset.
+
+        Args:
+            topic (str): Topic name
+            partition (int): Partition number
+            offset (int): Offset to start consuming from
+        """
+        self.rdk_consumer.assign_topic_offset(topic, partition, offset)
 
     def _post_start(self):
         """
@@ -161,6 +184,8 @@ cdef class Consumer:
             self._pre_stop()
             if self.error_callback:
                 unregister_error_callback(self.rdk_consumer.get_name())
+            if self.rebalance_callback:
+                unregister_rebalance_callback(self.rdk_consumer.get_name())
             logger.info("Closing rd kafka poll task")
             self.poll_rd_kafka_task.cancel()
             self.rdk_consumer.stop()
