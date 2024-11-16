@@ -10,7 +10,7 @@ from setuptools.command.build_ext import build_ext
 with open(os.path.join(os.path.dirname(__file__), "README.rst")) as f:
     readme = f.read()
 
-version = "0.3.18"
+version = "0.3.20"
 module_name = "asynckafka"
 github_username = "jmf-mordis"
 language_level = "3"
@@ -175,7 +175,10 @@ setup(
         github_username=github_username, module_name=module_name, version=version
     ),
     cmdclass=LazyCommandClass(),
-    setup_requires=["cython"],
+    setup_requires=[
+        "cython>=0.29.21",
+        "setuptools>=18.0",
+    ],
     install_requires=[],
     ext_modules=module_list,
     classifiers=[
