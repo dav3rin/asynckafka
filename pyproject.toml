@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.poetry]
 name = "asynckafka"
-version = "0.3.24"
+version = "0.3.25"
 description = "Fast python kafka client for asyncio."
 authors = ["José Melero Fernández <jmelerofernandez@gmail.com>"]
 license = "MIT"
@@ -30,7 +30,26 @@ python = "^3.6"
 
 [tool.poetry.group.dev.dependencies]
 cython = ">=0.29.21"
+mypy-extensions = ">=0.4.3"
+typing-extensions = ">=3.7.4"
 
 [tool.poetry.build]
 script = "setup.py"
-generate-setup-file = false 
+generate-setup-file = false
+
+[tool.poetry.plugins."poetry.application.plugin"]
+stub-builder = "poetry_stubs_plugin:StubsPlugin"
+
+[tool.mypy]
+python_version = "3.6"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true 

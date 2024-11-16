@@ -2,13 +2,16 @@
 import os
 import sys
 
+from Cython.Build import cythonize
+from Cython.Compiler import Options
+from Cython.Distutils.build_ext import new_build_ext as build_ext
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 with open(os.path.join(os.path.dirname(__file__), "README.rst")) as f:
     readme = f.read()
 
-version = "0.3.24"
+version = "0.3.25"
 module_name = "asynckafka"
 github_username = "jmf-mordis"
 language_level = "3"
@@ -37,6 +40,23 @@ module_list = [
     )
     for extension in extensions
 ]
+
+
+def create_stub_files():
+    from Cython.Shadow import _write_pyi
+
+    for root, _, files in os.walk("asynckafka"):
+        for file in files:
+            if file.endswith(".pyx"):
+                module_path = os.path.join(root, file)
+                stub_path = module_path.rsplit(".", 1)[0] + ".pyi"
+                _write_pyi(module_path, stub_path)
+
+
+class CustomBuildExt(build_ext):
+    def build_extensions(self):
+        super().build_extensions()
+        create_stub_files()
 
 
 class LazyCommandClass(dict):
@@ -120,7 +140,9 @@ setup(
     platforms=["*nix"],
     version=version,
     download_url=f"https://github.com/{github_username}/{module_name}/archive/{version}.tar.gz",
-    cmdclass=LazyCommandClass(),
+    cmdclass={
+        "build_ext": CustomBuildExt,
+    },
     setup_requires=[
         "cython>=0.29.21",
         "setuptools>=42.0.0",
