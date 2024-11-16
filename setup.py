@@ -8,7 +8,7 @@ from setuptools.command.build_ext import build_ext
 with open(os.path.join(os.path.dirname(__file__), "README.rst")) as f:
     readme = f.read()
 
-version = "0.3.21"
+version = "0.3.22"
 module_name = "asynckafka"
 github_username = "jmf-mordis"
 language_level = "3"
@@ -101,6 +101,7 @@ setup(
     packages=[module_name],
     description="Fast python kafka client for asyncio.",
     long_description=readme,
+    long_description_content_type="text/x-rst",
     url=f"http://github.com/{github_username}/{module_name}",
     license="MIT",
     author="José Melero Fernández",
@@ -111,7 +112,7 @@ setup(
     cmdclass=LazyCommandClass(),
     setup_requires=[
         "cython>=0.29.21",
-        "setuptools>=18.0",
+        "setuptools>=42.0.0",
     ],
     install_requires=[],
     ext_modules=module_list,
@@ -125,5 +126,5 @@ setup(
         "Framework :: AsyncIO",
     ],
     keywords=["asyncio", "kafka", "cython"],
-    test_suite="unittest",
+    python_requires=">=3.6",
 )
