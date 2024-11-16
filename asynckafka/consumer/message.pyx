@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from asynckafka.includes cimport c_rd_kafka as crdk
 from asynckafka.settings cimport debug
@@ -95,18 +94,4 @@ cdef class Message:
         offset (int): Message offset in the partition
         partition (int): Partition number the message was consumed from
     """
-    cdef public:
-        int error
-        bytes payload
-        bytes key 
-        str topic
-        long long offset
-        int partition
-        
-    def __init__(self):
-        self.error = 0
-        self.payload = b''
-        self.key = b''
-        self.topic = ''
-        self.offset = -1
-        self.partition = -1
+    pass
