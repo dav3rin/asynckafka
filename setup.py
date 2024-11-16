@@ -8,7 +8,7 @@ from setuptools.command.build_ext import build_ext
 with open(os.path.join(os.path.dirname(__file__), "README.rst")) as f:
     readme = f.read()
 
-version = "0.3.22"
+version = "0.3.23"
 module_name = "asynckafka"
 github_username = "jmf-mordis"
 language_level = "3"
@@ -62,6 +62,17 @@ class LazyCommandClass(dict):
                 ),
                 ("cython-directives=", None, "Cython compiler directives"),
             ]
+
+            boolean_options = build_ext.boolean_options + [
+                "cython-always",
+                "cython-annotate",
+            ]
+
+            def initialize_options(self):
+                super().initialize_options()
+                self.cython_always = False
+                self.cython_annotate = False
+                self.cython_directives = None
 
             def finalize_options(self):
                 from Cython.Build import cythonize
