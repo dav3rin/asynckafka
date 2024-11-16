@@ -1,0 +1,32 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "Cython>=0.29.21",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.poetry]
+name = "asynckafka"
+version = "0.3.20"
+description = "Fast python kafka client for asyncio."
+authors = ["José Melero Fernández <jmelerofernandez@gmail.com>"]
+license = "MIT"
+readme = "README.rst"
+packages = [{include = "asynckafka"}]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Framework :: AsyncIO",
+]
+keywords = ["asyncio", "kafka", "cython"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+
+[tool.poetry.group.dev.dependencies]
+cython = ">=0.29.21" 

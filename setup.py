@@ -2,15 +2,13 @@
 import os
 import sys
 
-from Cython.Build import cythonize
-from Cython.Build.Dependencies import default_create_extension
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 with open(os.path.join(os.path.dirname(__file__), "README.rst")) as f:
     readme = f.read()
 
-version = "0.3.20"
+version = "0.3.21"
 module_name = "asynckafka"
 github_username = "jmf-mordis"
 language_level = "3"
@@ -40,15 +38,8 @@ module_list = [
     for extension in extensions
 ]
 
-requirements = []
-
 
 class LazyCommandClass(dict):
-    """
-    Lazy command class that defers operations requiring Cython until
-    they've actually been downloaded and installed by setup_requires.
-    """
-
     def __contains__(self, key):
         return key == "build_ext" or super(LazyCommandClass, self).__contains__(key)
 
@@ -69,86 +60,34 @@ class LazyCommandClass(dict):
                     None,
                     "Produce a colorized HTML version of the Cython source.",
                 ),
-                ("cython-directives=", None, "Cythion compiler directives"),
+                ("cython-directives=", None, "Cython compiler directives"),
             ]
-
-            boolean_options = build_ext.boolean_options + [
-                "cython-always",
-                "cython-annotate",
-            ]
-
-            def initialize_options(self):
-                # initialize_options() may be called multiple times on the
-                # same command object, so make sure not to override previously
-                # set options.
-                if getattr(self, "_initialized", False):
-                    return
-
-                super().initialize_options()
-                self.cython_always = False
-                self.cython_annotate = None
-                self.cython_directives = None
 
             def finalize_options(self):
-                if getattr(self, "_initialized", False):
-                    return
+                from Cython.Build import cythonize
 
-                need_cythonize = self.cython_always
-                cfiles = {}
+                directives = {
+                    "language_level": language_level,
+                    "emit_code_comments": True,
+                }
 
-                for extension in self.distribution.ext_modules:
-                    for i, sfile in enumerate(extension.sources):
-                        if sfile.endswith(".pyx"):
-                            prefix, ext = os.path.splitext(sfile)
-                            cfile = prefix + ".c"
+                if self.cython_directives:
+                    for directive in self.cython_directives.split(","):
+                        k, _, v = directive.partition("=")
+                        if v.lower() == "false":
+                            v = False
+                        if v.lower() == "true":
+                            v = True
+                        directives[k] = v
 
-                            if os.path.exists(cfile) and not self.cython_always:
-                                extension.sources[i] = cfile
-                            else:
-                                if os.path.exists(cfile):
-                                    cfiles[cfile] = os.path.getmtime(cfile)
-                                else:
-                                    cfiles[cfile] = 0
-                                need_cythonize = True
-
-                if need_cythonize:
-                    try:
-                        import Cython
-                    except ImportError:
-                        raise RuntimeError(
-                            "please install Cython to compile asynckafka from source"
-                        )
-
-                    if Cython.__version__ < "0.28":
-                        raise RuntimeError(
-                            "asynckafka requires Cython version 0.28 or greater"
-                        )
-
-                    from Cython.Build import cythonize
-
-                    directives = {
-                        "language_level": language_level,
-                        "emit_code_comments": True,
-                    }
-
-                    if self.cython_directives:
-                        for directive in self.cython_directives.split(","):
-                            k, _, v = directive.partition("=")
-                            if v.lower() == "false":
-                                v = False
-                            if v.lower() == "true":
-                                v = True
-                            directives[k] = v
-
-                    self.distribution.ext_modules[:] = cythonize(
-                        self.distribution.ext_modules,
-                        compiler_directives=directives,
-                        annotate=self.cython_annotate,
-                        compile_time_env={"CYTHON_GENERATE_PYI": "1"},
-                    )
+                self.distribution.ext_modules[:] = cythonize(
+                    self.distribution.ext_modules,
+                    compiler_directives=directives,
+                    annotate=self.cython_annotate,
+                    compile_time_env={"CYTHON_GENERATE_PYI": "1"},
+                )
 
                 super().finalize_options()
-                self._initialized = True
 
             def build_extensions(self):
                 self.compiler.add_library("pthread")
@@ -162,18 +101,13 @@ setup(
     packages=[module_name],
     description="Fast python kafka client for asyncio.",
     long_description=readme,
-    url="http://github.com/{github_username}/{module_name}".format(
-        github_username=github_username, module_name=module_name
-    ),
+    url=f"http://github.com/{github_username}/{module_name}",
     license="MIT",
     author="José Melero Fernández",
     author_email="jmelerofernandez@gmail.com",
     platforms=["*nix"],
     version=version,
-    download_url="https://github.com/{github_username}/{module_name}/archive/"
-    "{version}.tar.gz".format(
-        github_username=github_username, module_name=module_name, version=version
-    ),
+    download_url=f"https://github.com/{github_username}/{module_name}/archive/{version}.tar.gz",
     cmdclass=LazyCommandClass(),
     setup_requires=[
         "cython>=0.29.21",
