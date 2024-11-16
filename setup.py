@@ -2,6 +2,8 @@
 import os
 import sys
 
+from Cython.Build import cythonize
+from Cython.Build.Dependencies import default_create_extension
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
@@ -88,9 +90,6 @@ class LazyCommandClass(dict):
                 self.cython_directives = None
 
             def finalize_options(self):
-                # finalize_options() may be called multiple times on the
-                # same command object, so make sure not to override previously
-                # set options.
                 if getattr(self, "_initialized", False):
                     return
 
@@ -117,17 +116,21 @@ class LazyCommandClass(dict):
                         import Cython
                     except ImportError:
                         raise RuntimeError(
-                            "please install Cython to compile uvloop from source"
+                            "please install Cython to compile asynckafka from source"
                         )
 
                     if Cython.__version__ < "0.28":
                         raise RuntimeError(
-                            "uvloop requires Cython version 0.28 or greater"
+                            "asynckafka requires Cython version 0.28 or greater"
                         )
 
                     from Cython.Build import cythonize
 
-                    directives = {"language_level": language_level}
+                    directives = {
+                        "language_level": language_level,
+                        "emit_code_comments": True,
+                    }
+
                     if self.cython_directives:
                         for directive in self.cython_directives.split(","):
                             k, _, v = directive.partition("=")
@@ -135,13 +138,13 @@ class LazyCommandClass(dict):
                                 v = False
                             if v.lower() == "true":
                                 v = True
-
                             directives[k] = v
 
                     self.distribution.ext_modules[:] = cythonize(
                         self.distribution.ext_modules,
                         compiler_directives=directives,
                         annotate=self.cython_annotate,
+                        compile_time_env={"CYTHON_GENERATE_PYI": "1"},
                     )
 
                 super().finalize_options()
