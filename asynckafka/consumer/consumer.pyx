@@ -269,6 +269,44 @@ cdef class Consumer:
             )
         raise StopAsyncIteration
 
+    async def next_precommited(self):
+        """
+        Polls rdkafka consumer, commits the message, and then yields it.
+        This ensures the message is committed before being processed.
+
+        Returns:
+            asynckafka.consumer.message.Message: Message consumed.
+        """
+        cdef crdk.rd_kafka_message_t *rk_message
+        try:
+            while self.consumer_state == consumer_states.CONSUMING:
+                    rk_message = crdk.rd_kafka_consumer_poll(
+                        self.rdk_consumer.consumer, 0)
+                    if rk_message:
+                        message = message_factory_no_destroy(rk_message)
+                        if not message.error:
+                            # Commit the message before yielding
+                            crdk.rd_kafka_commit_message(
+                                self.rdk_consumer.consumer, rk_message, 0
+                            )
+                            yield message
+                        else:
+                            raise exceptions.ConsumerError("Message error")
+                        message_destroy(rk_message)
+                    else:
+                        if debug: logger.debug("Poll timeout without messages")
+                        await asyncio.sleep(
+                            self.poll_interval
+                        )
+        except asyncio.CancelledError:
+            logger.info("Poll consumer thread task canceled")
+            raise
+        except Exception:
+            logger.error(
+                "Unexpected exception consuming messages from thread",
+                exc_info=True
+            )
+        raise StopAsyncIteration
 
     async def __anext__(self):
         """

@@ -11,7 +11,7 @@ from setuptools.command.build_ext import build_ext
 with open(os.path.join(os.path.dirname(__file__), "README.rst")) as f:
     readme = f.read()
 
-version = "0.3.26"
+version = "0.3.27"
 module_name = "asynckafka"
 github_username = "jmf-mordis"
 language_level = "3"

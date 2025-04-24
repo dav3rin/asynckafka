@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.poetry]
 name = "asynckafka"
-version = "0.3.26"
+version = "0.3.27"
 description = "Fast python kafka client for asyncio."
 authors = ["José Melero Fernández <jmelerofernandez@gmail.com>"]
 license = "MIT"
